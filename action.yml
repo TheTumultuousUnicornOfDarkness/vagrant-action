@@ -56,6 +56,10 @@ inputs:
   save_box_to_cache:
     description: Save Vagrant Box to GitHub Actions Cache
     type: boolean
+  ssh_shell:
+    default: bash
+    description: Shell to be used for `config.ssh.shell` in Vagrantfile
+    type: string
   use_cached_box:
     description: Use Vagrant Box from GitHub Actions Cache
     type: boolean
@@ -180,7 +184,7 @@ runs:
             config.ssh.compression = false
             config.ssh.connect_timeout = ${{ inputs.connect_timeout }}
             config.ssh.forward_env = ["*"]
-            config.ssh.shell = "bash"
+            config.ssh.shell = "${{ inputs.ssh_shell }}"
             config.ssh.username = "${{ inputs.vagrant_ssh_username }}"
             config.vm.boot_timeout = ${{ inputs.boot_timeout }}
             config.vm.box = "${{ inputs.box }}"
