@@ -88,45 +88,41 @@ runs:
       shell: bash
       if: runner.os == 'macOS'
 
-    - name: Install/Upgrade Vagrant (Linux)
-      env:
-        DEBIAN_FRONTEND: noninteractive
+    - name: Pre-install Vagrant (Linux)
       run: |
         if [ "${ImageOS}" = "ubuntu24" ]; then
           # Ubuntu 24.04 no longer provides Vagrant, install from Hashicorp
           sudo bash -c 'curl --silent https://apt.releases.hashicorp.com/gpg | gpg --dearmor > /usr/share/keyrings/hashicorp-archive-keyring.gpg'
           sudo bash -c 'echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com '$(lsb_release -cs)' main" > /etc/apt/sources.list.d/hashicorp.list'
+          echo "/opt/vagrant/bin >> "$GITHUB_PATH"
         fi
-        sudo apt-get update
-        sudo apt-get --yes install \
-          vagrant
-        if [ "${ImageOS}" = "ubuntu24" ]; then
-          # Vagrant from Hashicorp installs a bash wrapper
-          sudo ln --force --symbolic /opt/vagrant/bin/vagrant /usr/bin/vagrant
-        fi
-      shell: bash
       if: runner.os == 'Linux'
 
-    - name: Install/Configure Provider Dependencies (Linux) (libvirt)
-      env:
-        DEBIAN_FRONTEND: noninteractive
+    - name: Install Vagrant (Linux)
+      uses: awalsh128/cache-apt-pkgs-action@v1
+      with:
+        packages: vagrant
+        version: 1.0
+      if: runner.os == 'Linux'
+
+    - name: Install Provider Dependencies (Linux) (libvirt)
+      uses: awalsh128/cache-apt-pkgs-action@v1
+      with:
+        packages: libguestfs-tools libvirt-daemon-system libvirt-dev qemu-system
+        version: 1.0
+      if: runner.os == 'Linux' && env.PROVIDER == 'libvirt'
+
+    - name: Configure Provider Dependencies (Linux) (libvirt)
       run: |
-        sudo apt-get --yes install \
-          libguestfs-tools \
-          libvirt-daemon-system \
-          libvirt-dev \
-          qemu-system
         sudo setfacl -m user:$USER:rw /var/run/libvirt/libvirt-sock
       shell: bash
       if: runner.os == 'Linux' && env.PROVIDER == 'libvirt'
 
-    - name: Install/Configure Provider Dependencies (Linux) (virtualbox)
-      env:
-        DEBIAN_FRONTEND: noninteractive
-      run: |
-        sudo apt-get --yes install \
-          virtualbox
-      shell: bash
+    - name: Install Provider Dependencies (Linux) (virtualbox)
+      uses: awalsh128/cache-apt-pkgs-action@v1
+      with:
+        packages: virtualbox
+        version: 1.0
       if: runner.os == 'Linux' && env.PROVIDER == 'virtualbox'
 
     - name: Install/Upgrade Vagrant (macOS)
